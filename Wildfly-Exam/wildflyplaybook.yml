@@ -1,0 +1,66 @@
+---
+- hosts: groupWildfly
+  remote_user: mathilde
+
+  handlers:
+   - name : Relancer le service wildfly
+     service : name=wildfly state=reloaded enabled=yes
+
+  tasks:
+   - name: installation du openjdk-8-headless
+     package: 
+       name: openjdk-8-jdk-headless
+       state: present
+
+   - name: Ajout de l'utilisateur 'wildfly'
+     user:
+       name: wildfly
+       state: present
+
+   - name: Création du répertoire /opt/wildfly
+     file:
+       path: /opt/wildfly
+       state: directory
+       owner: wildfly
+       group: wildfly
+
+   - name: Désarchiver 
+     unarchive:
+       src: wildfly-11.0.0.Final.tar.gz
+       dest: /opt/
+
+   - name: Création d'un lien symbolique
+      file:
+       src: /home/wildfly/wildfly-11.0.0.Final
+       dest: /opt/wildfly
+       owner: wildfly
+       state: link
+
+   - name: Attribution des droits à Wildfly
+     file: 
+      dest: /opt/wildfly
+      owner: wildfly 
+      group: wildfly 
+      mode:
+        u=rwX,g=rX,o=rX 
+      recurse: yes 
+
+   - name: Création du répertoire /etc/wildfly
+     file:
+       path: /etc/wildfly
+       state: directory
+       owner: wildfly
+       group: wildfly
+
+   - name: Copie du fichier wildfly.conf 
+     shell: cp /opt/wildfly/docs/contrib/scripts/systemd/wildfly.conf /etc/wildfly/
+
+   - name: Copie du fichier wildfly.service 
+     shell: cp /opt/wildfly/docs/contrib/scripts/systemd/wildfly.service /etc/systemd/system/
+
+   - name: Démarrage du service Wildfly
+     service:
+       name: wildfly
+       state: started
+
+
